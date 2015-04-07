@@ -34,7 +34,12 @@
 #include <getopt.h>     // getopt_long()
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>      // open()
+#include <unistd.h>     // fork()
 #include <sys/mman.h>   // mlock()
+#include <sys/ioctl.h>  // ioctl()
+#include <sys/wait.h>   // waitpid()
+#include <linux/vt.h>
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -303,6 +308,10 @@ main(int argc, char** argv) {
     int screen_num;
     WindowPositionInfo info;
 
+    int term;
+    int pid;
+    Bool lockVtSwitch = False;
+
     Cursor invisible;
     Window root, w;
     XColor black, red, white;
@@ -334,6 +343,39 @@ main(int argc, char** argv) {
     for (unsigned int i = 0; i < sizeof(passdisp); i += strlen(opt_passchar))
         for (unsigned int j = 0; j < strlen(opt_passchar) && i + j < sizeof(passdisp); j++)
             passdisp[i + j] = opt_passchar[j];
+
+    /* disable tty switching */
+    if (geteuid() == 0) {
+        lockVtSwitch = True;
+        if ((term = open("/dev/console", O_RDWR)) == -1) {
+            perror("error opening console");
+        }
+        if ((ioctl(term, VT_LOCKSWITCH)) == -1) {
+            perror("error locking console");
+        }
+    }
+
+    /* deamonize */
+    pid = fork();
+    if (pid < 0) {
+        die("could not fork sxlock");
+    } else if (pid > 0) {
+        /* wait for locker to terminate */
+        waitpid(pid, 0, 0);
+
+        /* free and unlock */
+        if (lockVtSwitch) {
+            if ((ioctl(term, VT_UNLOCKSWITCH)) == -1) {
+                perror("error unlocking console");
+            }
+            close(term);
+        }
+
+        setuid(getuid()); // drop rights permanently
+        exit(0); // exit parent
+    } else {
+        setuid(getuid()); // drop rights permanently
+    }
 
     /* initialize random number generator */
     srand(time(NULL));
