@@ -29,5 +29,5 @@ clean:
 	$(RM) sxlock
 
 install: sxlock
-	install -Dm4755 sxlock $(DESTDIR)/usr/bin/sxlock
+	install -Dm755 sxlock $(DESTDIR)/usr/bin/sxlock
 	install -Dm644 sxlock.pam $(DESTDIR)/etc/pam.d/sxlock

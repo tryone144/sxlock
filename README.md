@@ -12,6 +12,7 @@ Features
  - uses PAM
  - sets DPMS timeout to 10 seconds, before exit restores original settings
  - basic RandR support (drawing centered on the primary output)
+ - lock vt-switching if suid-bit is set
 
 
 Requirements
@@ -30,10 +31,23 @@ Arch Linux users can install this package from the [AUR](https://aur.archlinux.o
 
 For manual installation just install dependencies, checkout and make:
 
-    git clone git://github.com/lahwaacz/sxlock.git
+    git clone git://github.com/tryone144/sxlock.git
     cd ./sxlock
     make
     ./sxlock
+
+For systemwide installation into ```$DESTDIR/usr/bin```:
+
+    sudo make install
+    sxlock
+
+To use vt-switching-lock feature set suid-bit:
+
+    chmod u+s ./sxlock
+
+or
+
+    sudo chmod u+s $DESTDIR/usr/bin/sxlock
 
 
 Running sxlock
@@ -44,7 +58,7 @@ Simply invoking the sxlock command starts the display locker with default settin
 Custom settings:
 
     -f <font description>: modify the font.
-    -c <password characters>: modify the characters displayed when the user enters his password. This can be a sequence of characters to create a fake password.
+    -p <password characters>: modify the characters displayed when the user enters his password. This can be a sequence of characters to create a fake password.
 
 Hooking into systemd events
 ---------------------------
